@@ -1,2 +1,4 @@
 streamlit
 streamlit-authenticator
+pillow
+streamlit-timeline
