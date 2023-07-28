@@ -1,0 +1,53 @@
+{
+  "title": {
+    "media": {
+    },
+    "text": {
+      "headline": "Work <br>History",
+      "text": "<p>Dominik Golebiewski</p>"
+    }
+  },
+  "events": [
+    {
+      "start_date": {
+        "year": "2019",
+        "month": "10"
+      },
+      "end_date": {
+        "year": "2024"
+      },
+      "text": {
+        "headline": "Database Developer<br/><font color='blue'>Atheon Analytics</font><br/>Fully Remote, UK",
+        "text": "<br/><ul><li>Developed effective modular SQL and Jinja scripts utilising DBT and Snowflake, resulting in enhanced performance.</li><li>Designed internal database tools utilising Snowflake, Streamlit, and Python to enhance productivity and cycle time.</li><li>Developed a testing framework and an internal DBT package to facilitate case\ntests for data pipelines.</li><li>Refactored transformation architecture resulting in a ~70% performance\nincrease and ~60% Snowflake credits reduction.</li><li>Designed and implemented the back-end database that provides data to the\nBI tool Tableau and the end user.</li><li>Supported junior developers and customer support with database-related\nquestions, resulting in increased productivity and quicker delivery.</li><li>Achieved Snowflake SnowPro Core accreditation.</li></ul>"
+      }
+    },
+    {
+      "start_date": {
+        "year": "2018",
+        "month": "10"
+      },
+      "end_date": {
+        "year": "2019",
+        "month": "10"
+      },
+      "text": {
+        "headline": "Junior Database Developer<br/><font color='blue'>Atheon Analytics</font><br/>Cranfield, UK",
+        "text": "<br/><ul><li>Enhanced customer satisfaction and expedited delivery by assisting customer\nsupport with database queries.</li><li>Participated in the redesign and implementation of ETL processes for legacy customer data outside of normal business hours to ensure timely and error-free data migration.</li><li>Improved understanding of the most recent technologies, Python, and the Snowflake data warehouse in the Cloud.</li></ul>"
+      }
+    },
+    {
+      "start_date": {
+        "year": "2016",
+        "month": "9"
+      },
+      "end_date": {
+        "year": "2018",
+        "month": "10"
+      },
+      "text": {
+        "headline": "SQL Developer<br/><font color='blue'>XPO Logistics</font><br/>Milton Keynes, UK",
+        "text": "<br/><ul><li>Developed database application automation using Visual Basic and Excel VBA.</li><li>Data analysis using Excel and PL/SQL.</li></ul>"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+venv/
+/.streamlit/Apps.py
+/.streamlit/UK_Enterprises.py
+/.streamlit/stores.csv
+.idea/
+functions/__pycache__/
+data/
