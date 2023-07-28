@@ -26,9 +26,9 @@ SOCIAL_MEDIA = {
 
 
 PROJECTS = {
-    "🏆 Streamlit Multi Thread Database Migration Tool - Comparing sales across three stores": "https://youtu.be/Sb0A9i6d320",
-    "🏆  - Web app with NoSQL database": "https://youtu.be/3egaMfE9388",
-    "🏆 Desktop Application - Excel2CSV converter with user settings & menubar": "https://youtu.be/LzCfNanQ_9c",
+    "🏆 Snowflake cost reduction - Unoptimised query optimizer ": "https://medium.com/@AtheonAnalytics/snowflake-query-optimiser-unoptimised-cf0223bdd136",
+    "🏆 Streamlit multi thread database migration tool for over 1700+ databases": "",
+    "🏆 DBT Artifacts Interactive Dashboard with Streamlit and Altair ": "assets/img/dbt_artifacts_altair.png",
     "🏆 MyToolBelt - Custom MS Excel add-in to combine Python & Excel": "https://pythonandvba.com/mytoolbelt/",
 }
 
@@ -101,55 +101,53 @@ st.subheader("Work History")
 st.write("---")
 
 # load data
-with open(job_history, "r") as f:
-    data = f.read()
+# with open(job_history, "r") as f:
+#     data = f.read()
+#
+# # render timeline
+# timeline(data, height=950)
 
-# render timeline
-timeline(data, height=950)
+# --- JOB 1
+st.write("🤝🏻", "**Database Developer | Atheon Analytics | Fully Remote, UK**")
+st.write("02/2022 - Present")
+st.write(
+    """
+- ► Developed effective modular SQL and Jinja scripts utilizing DBT and Snowflake, resulting in enhanced performance.
+- ► Designed internal database tools utilizing Snowflake, Streamlit, and Python to enhance productivity and cycle time.
+- ► Developed a testing framework and an internal DBT package to facilitate case tests for data pipelines.
+- ► Refactored transformation architecture, resulting in a ~70% performance increase and ~60% Snowflake credit reduction.
+- ► Designed and implemented the back-end database that provides data to the BI tool Tableau and the end user.
+- ► Supported junior developers and customer support with database-related questions, resulting in increased productivity and quicker delivery.
+- ► Achieved Snowflake SnowPro Core accreditation.
+"""
+)
 
-# # --- JOB 1
-# st.write("🚧", "**Database Developer | Atheon Analytics | Fully Remote, UK**")
-# st.write("10/2019 - Present")
-# st.write(
-#     """
-# - ► Developed effective modular SQL and Jinja scripts utilising DBT and Snowflake, resulting in enhanced performance
-# - ► Designed internal database tools utilising Snowflake, Streamlit, and Python to enhance productivity and cycle time
-# - ► Developed a testing framework and an internal DBT package to facilitate case tests for data pipelines
-# - ► Refactored transformation architecture resulting in a ~70% performance increase and ~60% Snowflake credits reduction
-# - ► Designed and implemented the back-end database that provides data to the BI tool Tableau and the end user
-# - ► Supported junior developers and customer support with database-related questions, resulting in increased productivity and quicker delivery
-# - ► Achieved Snowflake SnowPro Core accreditation
-# """
-# )
-#
-# # --- JOB 2
-# st.write('\n')
-# st.write("🤝🏻", "**Junior Database Developer | <font color='blue'>Atheon Analytics</font> | Cranfield, UK**", unsafe_allow_html=True)
-# st.write("01/2018 - 02/2022")
-# st.write(
-#     """
-# - ► Enhanced customer satisfaction and expedited delivery by assisting customer support with database queries
-# - ► Participated in the redesign and implementation of ETL processes for legacy customer data outside of normal business hours to ensure timely and error-free data migration
-# - ► Improved understanding of the most recent technologies, Python, and the Snowflake data warehouse in the Cloud
-# """
-# )
-#
-# # --- JOB 3
-# st.write('\n')
-# st.write("🚧", "**Data Analyst | Chegg**")
-# st.write("04/2015 - 01/2018")
-# st.write(
-#     """
-# - ► Devised KPIs using SQL across company website in collaboration with cross-functional teams to achieve a 120% jump in organic traﬃc
-# - ► Analyzed, documented, and reported user survey results to improve customer communication processes by 18%
-# - ► Collaborated with analyst team to oversee end-to-end process surrounding customers' return data
-# """
-# )
-#
-#
-# # --- Projects & Accomplishments ---
-# st.write('\n')
-# st.subheader("Projects & Accomplishments")
-# st.write("---")
-# for project, link in PROJECTS.items():
-#     st.write(f"[{project}]({link})")
+# --- JOB 2
+st.write('\n')
+st.write("🤝🏻", "**Junior Database Developer | Atheon Analytics | Cranfield, UK**")
+st.write("01/2018 - 02/2022")
+st.write(
+    """
+- ► Enhanced customer satisfaction and expedited delivery by assisting customer support with database queries.
+- ► Participated in the redesign and implementation of ETL processes for legacy customer data outside of normal business hours to ensure timely and error-free data migration.
+- ► Improved understanding of the most recent technologies, Python, and the Snowflake data warehouse in the Cloud.
+"""
+)
+
+# --- JOB 3
+st.write('\n')
+st.write("🤝🏻", "**SQL Developer | XPO Logistics | Milton Keynes, UK**")
+st.write("09/2016 - 10/2018")
+st.write(
+    """
+- ► Developed database application automation using Visual Basic and Excel VBA.
+- ► Data analysis and reporting using Excel and PL/SQL.
+"""
+)
+
+# --- Projects & Accomplishments ---
+st.write('\n')
+st.subheader("Projects & Accomplishments")
+st.write("---")
+for project, link in PROJECTS.items():
+    st.write(f"[{project}]({link})")
