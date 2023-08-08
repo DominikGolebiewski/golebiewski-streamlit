@@ -28,6 +28,8 @@ from io import StringIO, BytesIO
 # with open('assets/e202301-202308.csv', 'wb') as encrypted_file:
 #     encrypted_file.write(encrypted)
 
+st.set_page_config(layout='wide')
+
 with open('.streamlit/config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
 
