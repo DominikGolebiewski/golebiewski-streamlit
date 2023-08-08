@@ -2,6 +2,7 @@ venv/
 /.streamlit/Apps.py
 /.streamlit/UK_Enterprises.py
 /.streamlit/stores.csv
+/.streamlit/secrets.toml
 .idea/
 functions/__pycache__/
 data/

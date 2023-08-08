@@ -1,8 +1,7 @@
 from pathlib import Path
-
 import streamlit as st
 from PIL import Image
-from streamlit_timeline import timeline
+
 
 # --- PATH SETTINGS ---
 css_file = "assets/main.css"
