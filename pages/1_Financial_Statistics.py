@@ -54,8 +54,8 @@ if authentication_status:
     decoded = csvStringIO.read().decode('utf-8')
 
     # Create a datetime slider with a range of one week
-    start_date = datetime(2023, 8, 7)
-    end_date = start_date + timedelta(weeks=-31)
+    start_date = datetime(2023, 8, 31)
+    end_date = start_date + timedelta(days=-62)
 
     selected_date = st.slider(
         "Select a date range",
