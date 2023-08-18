@@ -1,15 +1,15 @@
 import json
 import streamlit as st
-from streamlit import session_state as ss
 import pandas as pd
 import datetime
-from streamlit_elements import dashboard, elements, mui, nivo
+from streamlit import session_state as ss
 from types import SimpleNamespace
 from pathlib import Path
-
+from streamlit_elements import dashboard, elements, mui, nivo
 
 FILENAME = "assets/mock_data.json"
 
+st.set_page_config(layout="wide")
 
 def get_data(filename: json):
     with open(filename, "r") as f:
@@ -242,81 +242,7 @@ def main():
                             ]
                         }
                     )
-            # with mui.Paper(key="today", sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=5):
-            #
-            #     today_df = filtered_df.groupby(['date']).agg({'sales': 'sum'}).reset_index().to_dict(orient='records')
-            #     today_df_latast_date = max(today_df, key=lambda x: x['date'])
-            #     yesterday_df_latast_date = today_df_latast_date['date'] - datetime.timedelta(days=1)
-            #     today_df_yesterday_sales_date = filtered_df.query(f'date == "{str(yesterday_df_latast_date).strip()}"')
-            #     st.write(today_df_latast_date)
-            #
-            #     with mui.Box(sx={"display": "flex", "flexDirection": "row", "borderBottom": 3, "borderColor": "divider"}):
-            #         mui.icon.PieChart(sx={"padding": 1})
-            #         mui.Typography("Sales Today", sx={"padding": 1})
-            #     with mui.Box():
-            #         with mui.Box(sx = {"color": "text.secondary", "padding": 1} ):
-            #             mui.Typography("Today Sales", sx = {"display": "flex", 'fontSize': 30, 'fontWeight': 'light', "allign": "center"})
-            #             mui.Typography(f'£{today_df_latast_date["sales"]}', sx={ 'color': 'text.primary', 'fontSize': 34, 'fontWeight': 'medium' })
 
-            # with mui.Paper(key="line_28", sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=5):
-            #
-            #     line_28_df = data.groupby(['date', 'retailer']).agg({'sales': 'sum'}).reset_index().sort_values(by=['retailer', 'date'])
-            #     line_28_dict = pd.DataFrame(line_28_df).to_dict(orient='records')
-            #     line_data = []
-            #     for r in retailer:
-            #         merged_data = []
-            #         for entry in line_28_dict:
-            #             if entry["retailer"] == r:
-            #                 merged_data.append({"x": entry["date"], "y": entry["sales"]})
-            #
-            #         line_data.append({"id": r, "data": merged_data})
-            #     line_28_json = json.dumps(line_data, indent=2, default=serialize_datetime)
-            #
-            #     with mui.Box(sx={"display": "flex", "flexDirection": "row", "borderBottom": 3, "borderColor": "divider"}):
-            #         mui.icon.CalendarToday(sx={"padding": 1})
-            #         mui.Typography("28 Day Sales Calendar", sx={"padding": 1})
-            #     with mui.Box(sx={"flex": 1, "minHeight": 0}):
-            #         nivo.Bump(
-            #             data=json.loads(line_28_json),
-            #             colors = {'scheme': 'nivo'},
-            #             lineWidth = 3,
-            #             activeLineWidth = 6,
-            #             inactiveLineWidth = 3,
-            #             inactiveOpacity = 0.15,
-            #             pointSize = 10,
-            #             activePointSize = 16,
-            #             inactivePointSize = 0,
-            #             pointColor = {'theme': 'background'},
-            #             pointBorderWidth = 3,
-            #             activePointBorderWidth = 3,
-            #             pointBorderColor = {'from': 'serie.color'},
-            #             axisTop = {
-            #                 'tickSize': 5,
-            #                 'tickPadding': 5,
-            #                 'tickRotation': 45,
-            #                 'legend': '',
-            #                 'legendPosition': 'middle',
-            #                 'legendOffset': -36
-            #             },
-            #             axisBottom = {
-            #                 'tickSize': 5,
-            #                 'tickPadding': 5,
-            #                 'tickRotation': 45,
-            #                 'legend': '',
-            #                 'legendPosition': 'middle',
-            #                 'legendOffset': 32
-            #             },
-            #             axisLeft = {
-            #                 'tickSize': 5,
-            #                 'tickPadding': 5,
-            #                 'tickRotation': 0,
-            #                 'legend': 'ranking',
-            #                 'legendPosition': 'middle',
-            #                 'legendOffset': -40
-            #             },
-            #             margin = {'top': 70, 'right': 100, 'bottom': 70, 'left': 60}
-            #         )
 
 if __name__ == "__main__":
-    st.set_page_config(layout="wide")
     main()
