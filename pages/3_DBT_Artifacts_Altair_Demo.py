@@ -6,7 +6,11 @@ import json
 from altair import datum
 from pathlib import Path
 
+
+st.set_page_config(layout="wide")
+
 st.title("DBT Artifacts - Interactive Altair Demo")
+
 
 with st.expander("Documentation", expanded=False):
     st.write((Path(__file__).parent.parent / "assets/dbt_artifacts_altair.md").read_text())
