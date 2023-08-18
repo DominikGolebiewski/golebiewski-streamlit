@@ -27,7 +27,8 @@ SOCIAL_MEDIA = {
 PROJECTS = {
     "🏆 Snowflake cost reduction - Unoptimised query optimizer ": "https://medium.com/@AtheonAnalytics/snowflake-query-optimiser-unoptimised-cf0223bdd136",
     "🏆 Streamlit multi thread database migration tool for over 1700+ databases": "",
-    "🏆 DBT Artifacts Interactive Dashboard with Streamlit and Altair ": "https://golebiewski.streamlit.app/DBT_Artifacts_Altair_Demo"
+    "🏆 DBT Artifacts Interactive Dashboard with Streamlit and Altair ": "https://golebiewski.streamlit.app/DBT_Artifacts_Altair_Demo",
+    "🏆 Streamlit Elements Demo  ": "https://golebiewski.streamlit.app/Elements_Demo"
 }
 
 
