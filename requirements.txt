@@ -1,4 +1,6 @@
-streamlit==1.24.1
+streamlit==1.25.0
 streamlit-authenticator==0.2.2
-pillow==9.4.0
+pillow==10.0.0
 cryptography
+streamlit_elements==0.1.*
+pip-upgrader==1.4.15
