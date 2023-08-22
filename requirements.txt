@@ -4,4 +4,3 @@ streamlit-elements==0.1
 pip-upgrader==1.4.15
 cryptography
 duckdb==0.8.1
-

@@ -3,6 +3,10 @@ import duckdb as du
 import streamlit as st
 import pandas as pd
 import datetime
+import requests
+import tempfile
+
+
 from streamlit import session_state as ss
 from types import SimpleNamespace
 from pathlib import Path
@@ -10,13 +14,21 @@ from streamlit_elements import dashboard, elements, mui, nivo
 
 
 FILENAME = "assets/mock_data.json"
-
+GET_DATA_URL = f'https://api.mockaroo.com/api/101c51a0?count=1000&key={st.secrets["MOCKAROO_API"]}'
 st.set_page_config(layout="wide")
 
-def get_data(filename: json):
+@st.cache_data
+def get_data_url(json_url: str):
+    temp_file = tempfile.NamedTemporaryFile(mode="w+", delete=False)
+    request_data = requests.get(json_url).json()
+    json.dump(request_data, temp_file)
+    temp_file.flush()
+    filename = temp_file.name
+    return filename
+
+def get_data(filename: str):
     data = du.read_json(filename)
     return data
-
 
 def get_retailer(data: json):
     retailer_data = du.sql("SELECT retailer FROM 'data' GROUP BY retailer").df()
@@ -39,23 +51,35 @@ def pie_28_cat(data: json, retailer: str):
     pie_28_json = json.dumps(pie_data_dict, indent=2, default=serialize_datetime)
     return pie_28_json
 
-
 def bar_28(data: json, retailer: str):
     bar_28_df = du.sql(f"""
-        SELECT 
-            date, 
-            SUM(sales) as sales 
-        FROM 'data' 
-        WHERE retailer = '{retailer}'
-        AND category = IF('{ss.pie_category}' = 'all', category , '{ss.pie_category}')
-        AND date = IF('{ss.time_chart.day}' = '{None}', date, '{ss.time_chart.day}') 
-
-        GROUP BY date
+        WITH filterd_data AS (
+            SELECT 
+                date, 
+                SUM(sales) as sales 
+            FROM 'data' 
+            WHERE retailer = '{retailer}'
+            AND category = IF('{ss.pie_category}' = 'all', category , '{ss.pie_category}')
+            GROUP BY date
+        ),
+        filtered_date as (
+            SELECT 
+                *,
+                EXTRACT(DOW FROM IF('{ss.time_chart.day}' != '{None}', DATE '{ss.time_chart.day}', date)) as day_of_week
+            FROM filterd_data
+            WHERE EXTRACT(DOW FROM date) = day_of_week
+        )
+        SELECT
+            date,
+            sales
+        FROM filtered_date
+        ORDER BY date
     """).df()
     bar_28_df['date'] = pd.to_datetime(bar_28_df['date']).dt.date
     bar_28_dict = bar_28_df.to_dict(orient='records')
     bar_28_json = json.dumps(bar_28_dict, indent=2, default=serialize_datetime)
     return bar_28_json
+
 
 def cal_28(data: json, retailer: str):
     cal_28_df = du.sql(f"""
@@ -68,9 +92,11 @@ def cal_28(data: json, retailer: str):
         GROUP BY date
     """).df()
     cal_28_df['day'] = pd.to_datetime(cal_28_df['day']).dt.date
+    cal_28_mindate = cal_28_df['day'].min()
+    cal_28_maxdate = cal_28_df['day'].max()
     cal_28_dict = cal_28_df.to_dict(orient='records')
     cal_28_json = json.dumps(cal_28_dict, indent=2, default=serialize_datetime)
-    return cal_28_json
+    return cal_28_json, str(cal_28_mindate), str(cal_28_maxdate)
 
 def pie_total(data: json, retailer: str):
     pie_total_df = du.sql(f"SELECT retailer as id, SUM(sales) as value FROM 'data' GROUP BY id").df()
@@ -85,9 +111,10 @@ def pie_category_callback(event):
 def reset_pie_category(event):
     ss.pie_category = "all"
     ss.pie_category_color = "grey"
+
+def reset_time_chart(event):
     ss.time_chart.day = None
     ss.time_chart.firstWeek = None
-
 
 def time_range_callback(info):
     ss.time_chart.day = info.day
@@ -109,11 +136,9 @@ def main():
     filtered_df = filtered_data(data, selected_retailer)
 
     layout = [
-        dashboard.Item("pie_28_cat", 8, 0, 4, 3),
-        dashboard.Item("pie_28_ret", 0, 0, 4, 3),
-        dashboard.Item("cal_28", 4, 0, 4, 3),
-        # dashboard.Item("today", 4, 0, 4, 3),
-        dashboard.Item("bar_28", 0, 1, 12, 3),
+        dashboard.Item("pie_28_cat", 0, 0, 3, 3),
+        dashboard.Item("cal_28", 4, 0, 9, 3),
+        dashboard.Item("bar_28", 0, 1, 12, 4),
     ]
 
     with elements("dashboard"):
@@ -126,7 +151,32 @@ def main():
                 with mui.Box(sx={"display": "flex", "flexDirection": "row", "borderBottom": 3, "borderColor": "divider"}):
                     mui.icon.PieChart(sx={"padding": 1})
                     mui.Typography("28 Day Total Sales by Category", sx={"padding": 1})
-                    mui.Button("Reset", sx={"marginLeft": "auto", "marginRight": 1, "color": "blue"}, onClick=reset_pie_category)
+                    mui.Button(
+                        "Reset Filter",
+                        variant="outlined",
+                        sx={
+                            "marginLeft": "auto",
+                            "marginRight": "1",
+                            "marginTop": "1",
+                            "marginBottom": "1",
+                            "color": "black",
+                            "borderColor": None,
+                            "borderRadius": 0,
+                            "borderWidth": 0,
+                            "borderStyle": "solid",
+                            "textTransform": "none",
+                            "fontSize": "0.75rem",
+                            "fontWeight": "bold",
+                            "fontSize": 12,
+                            "transition": "none",
+                            '&:hover': {
+                                'color': 'red',
+                                'backgroundColor': 'white',
+                                'borderColor': 'white',
+                            },
+                        },
+                        disableRipple=True,
+                        onClick=reset_pie_category)
 
                 with mui.Box(sx={"flex": 1, "minHeight": 0}):
                     nivo.Pie(
@@ -138,6 +188,7 @@ def main():
                         padAngle=0.7,
                         cornerRadius=3,
                         activeOuterRadiusOffset=8,
+                        colors={'scheme': 'pastel1'},
                         borderWidth=1,
                         borderColor={
                             "from": "color",
@@ -196,10 +247,10 @@ def main():
                         axisBottom={
                             'tickSize': 5,
                             'tickPadding': 5,
-                            'tickRotation': 45,
+                            'tickRotation': 90,
                             'legend': 'Date',
                             'legendPosition': 'middle',
-                            'legendOffset': 65
+                            'legendOffset': 80
                         },
                         axisLeft={
                             'tickSize': 5,
@@ -207,23 +258,49 @@ def main():
                             'tickRotation': 0,
                             'legend': 'Sales Value',
                             'legendPosition': 'middle',
-                            'legendOffset': -65
+                            'legendOffset': -40
                         },
                         motionConfig="wobbly"
                     )
             with mui.Paper(key="cal_28", sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=5):
 
-                cal_28_data = cal_28(data, selected_retailer)
+                cal_28_data, min_date, max_date = cal_28(data, selected_retailer)
 
                 with mui.Box(sx={"display": "flex", "flexDirection": "row", "borderBottom": 3, "borderColor": "divider"}):
                     mui.icon.CalendarToday(sx={"padding": 1})
                     mui.Typography("28 Day Sales Calendar", sx={"padding": 1})
+                    mui.Button(
+                        "Reset Filter",
+                        variant="outlined",
+                        sx={
+                            "marginLeft": "auto",
+                            "marginRight": "1",
+                            "marginTop": "1",
+                            "marginBottom": "1",
+                            "color": "black",
+                            "borderColor": None,
+                            "borderRadius": 0,
+                            "borderWidth": 0,
+                            "borderStyle": "solid",
+                            "textTransform": "none",
+                            "fontSize": "0.75rem",
+                            "fontWeight": "bold",
+                            "fontSize": 12,
+                            "transition": "none",
+                            '&:hover': {
+                                'color': 'red',
+                                'backgroundColor': 'white',
+                                'borderColor': 'white',
+                            },
+                        },
+                        disableRipple=True,
+                        onClick=reset_time_chart)
                 with mui.Box(sx={"flex": 1, "minHeight": 0}):
                     nivo.TimeRange(
                         onClick=time_range_callback,
                         data=json.loads(cal_28_data),
-                        from_ = "2023-07-01",
-                        to="2023-07-28",
+                        from_ = min_date,
+                        to=max_date,
                         emptyColor="#eeeeee",
                         colors=['#61cdbb', '#97e3d5', '#e8c1a0', '#f47560'],
                         margin = {'top': 40, 'right': 40, 'bottom': 40, 'left': 40},
@@ -232,7 +309,7 @@ def main():
                         weekdayTicks = [0,1,2,3,4,5,6],
                         legends=[
                             {
-                                'anchor': 'right',
+                                'anchor': 'top-right',
                                 'direction': 'column',
                                 'justify': True,
                                 'itemCount': 5,
@@ -240,55 +317,12 @@ def main():
                                 'itemHeight': 36,
                                 'itemsSpacing': 14,
                                 'itemDirection': 'right-to-left',
-                                'translateX': -60,
-                                'translateY': -40,
+                                'translateX': -50,
+                                'translateY': 0,
                                 'symbolSize': 20
                             }
                         ]
                     )
-            with mui.Paper(key="pie_28_ret", sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=5):
-
-                pie_total_data = pie_total(data, selected_retailer)
-
-                with mui.Box(sx={"display": "flex", "flexDirection": "row", "borderBottom": 3, "borderColor": "divider"}):
-                    mui.icon.PieChart(sx={"padding": 1})
-                    mui.Typography("28 Day Total Sales by Retailer", sx={"padding": 1})
-
-                with mui.Box(sx={"flex": 1, "minHeight": 0}):
-                    nivo.Pie(
-                        data=json.loads(pie_total_data),
-                        theme="light",
-                        margin={"top": 40, "right": 80, "bottom": 80, "left": 80},
-                        innerRadius=0.5,
-                        padAngle=0.7,
-                        cornerRadius=3,
-                        activeOuterRadiusOffset=8,
-                        borderWidth=1,
-                        borderColor={
-                            "from": "color",
-                            "modifiers": [
-                                [
-                                    "darker",
-                                    0.2,
-                                ]
-                            ]
-                        },
-                        arcLinkLabelsSkipAngle=10,
-                        arcLinkLabelsTextColor="grey",
-                        arcLinkLabelsThickness=2,
-                        arcLinkLabelsColor={"from": "color"},
-                        arcLabelsSkipAngle=10,
-                        arcLabelsTextColor={
-                            "from": "color",
-                            "modifiers": [
-                                [
-                                    "darker",
-                                    2
-                                ]
-                            ]
-                        }
-                    )
-
 
 if __name__ == "__main__":
     if "pie_category" not in ss:
