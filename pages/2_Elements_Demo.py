@@ -1,4 +1,5 @@
 import json
+import duckdb as du
 import streamlit as st
 import pandas as pd
 import datetime
@@ -7,24 +8,24 @@ from types import SimpleNamespace
 from pathlib import Path
 from streamlit_elements import dashboard, elements, mui, nivo
 
+
 FILENAME = "assets/mock_data.json"
 
 st.set_page_config(layout="wide")
 
 def get_data(filename: json):
-    with open(filename, "r") as f:
-        data = json.loads(f.read())
-    data_df = pd.DataFrame(data, columns=['date', 'retailer', 'category', 'product', 'sales'])
-    data_df['date'] = pd.to_datetime(data_df['date']).dt.date
-    return data_df
+    data = du.read_json(filename)
+    return data
 
 
-def get_retailer(dataframe):
-    return dataframe['retailer'].unique().tolist()
+def get_retailer(data: json):
+    retailer_data = du.sql("SELECT retailer FROM 'data' GROUP BY retailer").df()
+    return retailer_data['retailer'].values.tolist()
 
 
-def filtered_data(dataframe, retailer):
-    return dataframe.query('retailer == ' + "'" + retailer + "'")
+def filtered_data(data: json, retailer: str):
+    filtered = du.sql(f"SELECT * FROM 'data' WHERE retailer = '{retailer}'")
+    return filtered
 
 
 def serialize_datetime(obj):
@@ -32,6 +33,65 @@ def serialize_datetime(obj):
         return obj.isoformat()
     raise TypeError("Type not serializable")
 
+def pie_28_cat(data: json, retailer: str):
+    pie_data = du.sql(f"SELECT category as id, SUM(sales) as value FROM 'data' WHERE retailer = '{retailer}' GROUP BY id").df()
+    pie_data_dict = pie_data.to_dict(orient='records')
+    pie_28_json = json.dumps(pie_data_dict, indent=2, default=serialize_datetime)
+    return pie_28_json
+
+
+def bar_28(data: json, retailer: str):
+    bar_28_df = du.sql(f"""
+        SELECT 
+            date, 
+            SUM(sales) as sales 
+        FROM 'data' 
+        WHERE retailer = '{retailer}'
+        AND category = IF('{ss.pie_category}' = 'all', category , '{ss.pie_category}')
+        AND date = IF('{ss.time_chart.day}' = '{None}', date, '{ss.time_chart.day}') 
+
+        GROUP BY date
+    """).df()
+    bar_28_df['date'] = pd.to_datetime(bar_28_df['date']).dt.date
+    bar_28_dict = bar_28_df.to_dict(orient='records')
+    bar_28_json = json.dumps(bar_28_dict, indent=2, default=serialize_datetime)
+    return bar_28_json
+
+def cal_28(data: json, retailer: str):
+    cal_28_df = du.sql(f"""
+        SELECT 
+            date as day, 
+            SUM(sales) as value 
+        FROM 'data' 
+        WHERE retailer = '{retailer}' 
+        AND category = IF('{ss.pie_category}' = 'all', category , '{ss.pie_category}')
+        GROUP BY date
+    """).df()
+    cal_28_df['day'] = pd.to_datetime(cal_28_df['day']).dt.date
+    cal_28_dict = cal_28_df.to_dict(orient='records')
+    cal_28_json = json.dumps(cal_28_dict, indent=2, default=serialize_datetime)
+    return cal_28_json
+
+def pie_total(data: json, retailer: str):
+    pie_total_df = du.sql(f"SELECT retailer as id, SUM(sales) as value FROM 'data' GROUP BY id").df()
+    pie_total_dict = pie_total_df.to_dict(orient='records')
+    pie_total_json = json.dumps(pie_total_dict, indent=2, default=serialize_datetime)
+    return pie_total_json
+
+def pie_category_callback(event):
+    ss.pie_category = event.id
+    ss.pie_category_color = event.color
+
+def reset_pie_category(event):
+    ss.pie_category = "all"
+    ss.pie_category_color = "grey"
+    ss.time_chart.day = None
+    ss.time_chart.firstWeek = None
+
+
+def time_range_callback(info):
+    ss.time_chart.day = info.day
+    ss.time_chart.firstWeek = info.firstWeek
 
 def main():
 
@@ -48,17 +108,12 @@ def main():
 
     filtered_df = filtered_data(data, selected_retailer)
 
-    # st.write(line_data)
-    # exit()
-
     layout = [
         dashboard.Item("pie_28_cat", 8, 0, 4, 3),
         dashboard.Item("pie_28_ret", 0, 0, 4, 3),
         dashboard.Item("cal_28", 4, 0, 4, 3),
         # dashboard.Item("today", 4, 0, 4, 3),
         dashboard.Item("bar_28", 0, 1, 12, 3),
-
-
     ]
 
     with elements("dashboard"):
@@ -66,19 +121,17 @@ def main():
         with dashboard.Grid(layout):
             with mui.Paper(key="pie_28_cat", sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=5):
 
-                pie_28_df = filtered_df.groupby(['category']).agg({'sales': 'sum'}).reset_index()
-                pie_28_dict = pie_28_df.to_dict(orient='records')
-                pie_28_rename = pd.DataFrame(pie_28_dict).rename(columns={'category': 'id', 'sales': 'value'})
-                pie_28_df = pd.pivot_table(pie_28_rename, values='value', index='id',aggfunc='sum').reset_index().to_dict(orient='records')
-                pie_28_json = json.dumps(pie_28_df, indent=2, default=serialize_datetime)
+                pie_28_data = pie_28_cat(data, selected_retailer)
 
                 with mui.Box(sx={"display": "flex", "flexDirection": "row", "borderBottom": 3, "borderColor": "divider"}):
                     mui.icon.PieChart(sx={"padding": 1})
                     mui.Typography("28 Day Total Sales by Category", sx={"padding": 1})
+                    mui.Button("Reset", sx={"marginLeft": "auto", "marginRight": 1, "color": "blue"}, onClick=reset_pie_category)
 
                 with mui.Box(sx={"flex": 1, "minHeight": 0}):
                     nivo.Pie(
-                        data=json.loads(pie_28_json),
+                        onClick=pie_category_callback,
+                        data=json.loads(pie_28_data),
                         theme="light",
                         margin={"top": 40, "right": 80, "bottom": 80, "left": 80},
                         innerRadius=0.5,
@@ -114,15 +167,14 @@ def main():
                     )
             with mui.Paper(key="bar_28", sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=5):
 
-                bar_28_df = filtered_df.groupby(['date', 'retailer']).agg({'sales': 'sum'}).reset_index().to_dict(orient='records')
-                bar_28_json = json.dumps(bar_28_df, indent=2, default=serialize_datetime)
+                bar_28_data = bar_28(data, selected_retailer)
 
                 with mui.Box(sx={"display": "flex", "flexDirection": "row", "borderBottom": 3, "borderColor": "divider"}):
                     mui.icon.BarChart(sx={ "padding": 1})
                     mui.Typography("28 Day Sales", sx={ "padding": 1})
                 with mui.Box(sx={"flex": 1, "minHeight": 0}):
                     nivo.Bar(
-                        data=json.loads(bar_28_json),
+                        data=json.loads(bar_28_data),
                         keys=["sales"],
                         indexBy="date",
                         theme="light",
@@ -130,7 +182,7 @@ def main():
                         padding=0.5,
                         valueScale={'type': 'linear'},
                         indexScale={'type': 'band', 'round': True},
-                        colors=['grey'],
+                        colors=ss.pie_category_color,
                         enableLabel=False,
                         borderColor={
                             "from": "color",
@@ -161,17 +213,15 @@ def main():
                     )
             with mui.Paper(key="cal_28", sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=5):
 
-                cal_28_df = filtered_df.groupby(['date']).agg({'sales': 'sum'}).reset_index().to_dict(orient='records')
-                cal_28_rename = pd.DataFrame(cal_28_df).rename(columns={'date': 'day', 'sales': 'value'})
-                cal_28_dict = cal_28_rename.to_dict(orient='records')
-                cal_28_json = json.dumps(cal_28_dict, indent=2, default=serialize_datetime)
+                cal_28_data = cal_28(data, selected_retailer)
 
                 with mui.Box(sx={"display": "flex", "flexDirection": "row", "borderBottom": 3, "borderColor": "divider"}):
                     mui.icon.CalendarToday(sx={"padding": 1})
                     mui.Typography("28 Day Sales Calendar", sx={"padding": 1})
                 with mui.Box(sx={"flex": 1, "minHeight": 0}):
                     nivo.TimeRange(
-                        data=json.loads(cal_28_json),
+                        onClick=time_range_callback,
+                        data=json.loads(cal_28_data),
                         from_ = "2023-07-01",
                         to="2023-07-28",
                         emptyColor="#eeeeee",
@@ -198,11 +248,7 @@ def main():
                     )
             with mui.Paper(key="pie_28_ret", sx={"display": "flex", "flexDirection": "column", "borderRadius": 3, "overflow": "hidden"}, elevation=5):
 
-                pie_28_ret_df = data.groupby(['retailer']).agg({'sales': 'sum'}).reset_index()
-                pie_28_ret_dict = pie_28_ret_df.to_dict(orient='records')
-                pie_28_ret_rename = pd.DataFrame(pie_28_ret_dict).rename(columns={'retailer': 'id', 'sales': 'value'})
-                pie_28_ret_df = pd.pivot_table(pie_28_ret_rename, values='value', index='id',aggfunc='sum').reset_index().to_dict(orient='records')
-                pie_28_ret_json = json.dumps(pie_28_ret_df, indent=2, default=serialize_datetime)
+                pie_total_data = pie_total(data, selected_retailer)
 
                 with mui.Box(sx={"display": "flex", "flexDirection": "row", "borderBottom": 3, "borderColor": "divider"}):
                     mui.icon.PieChart(sx={"padding": 1})
@@ -210,7 +256,7 @@ def main():
 
                 with mui.Box(sx={"flex": 1, "minHeight": 0}):
                     nivo.Pie(
-                        data=json.loads(pie_28_ret_json),
+                        data=json.loads(pie_total_data),
                         theme="light",
                         margin={"top": 40, "right": 80, "bottom": 80, "left": 80},
                         innerRadius=0.5,
@@ -245,4 +291,25 @@ def main():
 
 
 if __name__ == "__main__":
+    if "pie_category" not in ss:
+        ss.pie_category = "all"
+    else:
+        ss.pie_category = ss.pie_category
+    if "pie_category_color" not in ss:
+        ss.pie_category_color = "grey"
+    else:
+        ss.pie_category_color = ss.pie_category_color
+    # if "time_range" not in ss:
+    #     ss.time_range = None
+    # else:
+    #     ss.time_range = ss.time_range
+    if "time_chart" not in ss:
+        time_chart = SimpleNamespace(
+            firstWeek=None,
+            day=None)
+        ss.time_chart = time_chart
+        time_chart.firstWeek = None
+        time_chart.range = None
+    else:
+        time_chart = ss.time_chart
     main()
