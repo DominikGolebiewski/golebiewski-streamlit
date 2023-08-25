@@ -201,10 +201,6 @@ def main():
     availability_vs_last_week_percentage = availability_today - availability_week_ago
 
 
-    st.write(sales_value_today)
-    st.write(sales_value_week_ago)
-    # exit()
-
     def category_callback(event):
         state.select_category = event.data.id
         state.sales_bar_color = event.color
@@ -222,7 +218,8 @@ def main():
     with elements("main"):
         mui.Typography("28-day Summary", variant="h4", sx={"mb": 5, "align": "center"}, align="center")
         with w.dashboard(rowHeight=57):
-            w.sales_total("Sales Value", sales_value_today, sales_vs_last_week_percentage, value_format="{:,.0f}")
+            w.sales_total("Sales Value", sales_value_today, sales_vs_last_week_percentage, value_format="{:,.0f}",
+                          light_color="#e0e0e0", dark_color="#d1d1d1")
             w.supplier_service_total("Supplier Service", supplier_service_today, supplier_vs_last_week_percentage,
                                      value_format="{:.0%}", light_color="#cfe8ca", dark_color="#a1b59e")
             w.depot_service_total("Depot Service", depot_service_today, depot_vs_last_week_percentage,

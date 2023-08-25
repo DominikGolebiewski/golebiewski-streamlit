@@ -49,7 +49,7 @@ class Dashboard:
                     '&:hover': {
                         'opacity': [0.8],
                         'cursor': 'grab',
-                        'backgroundColor': kwargs.get("dark_color", "gray") if not self._dark_mode else kwargs.get("light_color", "#e6e6e6"),
+                        'backgroundColor': kwargs.get("dark_color", "#d1d1d1") if not self._dark_mode else kwargs.get("light_color", "#e6e6e6"),
                         }
                 },
             ):
