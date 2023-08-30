@@ -164,13 +164,24 @@ def main():
             def create_json_data_pie(dataframe, value_column, key_column):
                 df = dataframe[[value_column, key_column]]
                 df = df.groupby([key_column]).sum().reset_index()
+                df = df.rename(columns={value_column: 'value', key_column: 'id'})
+                df = df.fillna(0)
+                df_json = df.to_json(orient='records', default_handler=str)
+                return df_json
+
+            # create data for nivo line chart
+            def create_json_data_line(dataframe, date_column, value_column):
+                df = dataframe[[date_column, value_column]]
+                df = df.groupby([date_column]).min().reset_index()
+                df = df.rename(columns={value_column: 'y', date_column: 'x'})
                 df = df.fillna(0)
                 df_json = df.to_json(orient='records', default_handler=str)
                 return df_json
 
             dj = create_json_data(df, 'Transaction Date', 'Debit Amount', 'Spending Type')
             dp = create_json_data_pie(df, 'Debit Amount', 'Spending Type')
-            st.write(json.loads(dp))
+            dl = create_json_data_line(df, 'Transaction Date', 'Balance')
+            st.write(json.loads(dl))
 
             df_keys= df['Spending Type'].dropna().unique().tolist()
             # st.write(df_keys)
@@ -185,9 +196,37 @@ def main():
                             "borderRadius": "10px",
                             "flexDirection": "column",
                             "border-radius": "10px",
-                            "height": "800px",
+                            "height": "300px",
                         }
                 ):
+                    nivo.Pie(
+                        data=json.loads(dp),
+                        keys=['value'],
+                        indexBy='id',
+                        enableGridX=False,
+                        enableGridY=True,
+                        margin={"top": 50, "right": 150, "bottom": 100, "left": 70},
+                    )
+                with html.div(
+                            key='spending_bar',
+                            css=
+                            {
+                                "flex": 1,
+                                "background-color": "white",
+                                "display": "flex",
+                                "borderRadius": "10px",
+                                "flexDirection": "column",
+                                "border-radius": "10px",
+                                "height": "800px",
+                            }
+                    ):
+                    nivo.Line(
+                        data=json.loads(dl),
+                        enableGridX=False,
+                        enableGridY=True,
+
+                        margin={"top": 50, "right": 150, "bottom": 100, "left": 70},
+                    )
                     nivo.Bar(
                         data=json.loads(dj),
                         keys=df_keys,
