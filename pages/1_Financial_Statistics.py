@@ -47,6 +47,8 @@ if authentication_status:
     authenticator.logout('Logout', 'main')
     st.write(f'Welcome *{name}*')
 
+    uploaded_file = st.file_uploader("Choose a file")
+
     filekey = st.secrets["FILEKEY"]
     fernet = Fernet(filekey)
     with open('assets/e202301-202308.csv', 'rb') as enc_file:
@@ -56,8 +58,8 @@ if authentication_status:
     decoded = csvStringIO.read().decode('utf-8')
 
     # Create a datetime slider with a range of one week
-    start_date = datetime(2023, 7, 20)
-    end_date = start_date + timedelta(days=42)
+    start_date = datetime(2023, 7, 1)
+    end_date = start_date + timedelta(days=100)
 
     selected_date = st.slider(
         "Select a date range",
@@ -68,7 +70,7 @@ if authentication_status:
     )
     st.write(selected_date[0].strftime('%Y-%m-%d'))
     columns = ['date', 'type', 'srt', 'acc', 'desc', 'dbt', 'crd', 'bal']
-    df = pd.read_csv(StringIO(decoded), sep=",", names=columns, header=None, skiprows=1)
+    df = pd.read_csv(uploaded_file, sep=",", names=columns, header=None, skiprows=1)
     df['date'] = pd.to_datetime(df['date'], format='%d/%m/%Y')
     df['date'] = df['date'].dt.strftime('%Y-%m-%d')
     df['abs_bal'] = df['bal'].abs()
