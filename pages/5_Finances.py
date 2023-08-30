@@ -59,8 +59,12 @@ def main():
                 df = csv_to_df(uploaded_file)
                 df = df[df['Debit Amount'].notnull()]
 
-            df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d')
-            # df['Transaction Description'] = df['Transaction Description'].map({'KLARNA': 'Klarna', 'Klarna': 'Klarna', 'KLARNA AB': 'Klarna', 'ASDA SUPERSTORE  4': 'Asda', 'ICELAND': 'Iceland'})
+            df['Transaction Date'] = pd.to_datetime(df['Transaction Date']).dt.strftime('%Y-%m-%d')
+            max_date = datetime.strptime(df['Transaction Date'].max(), '%Y-%m-%d')
+            min_date = datetime.strptime(df['Transaction Date'].min(), '%Y-%m-%d')
+            selected_date = st.date_input('Select a date range', [min_date, max_date])
+
+
 
             mapping = {
                 'Spending': {
@@ -133,7 +137,6 @@ def main():
                         'Zettle': 'Zettle_WONDERFUL',
                         'P.O. OXFORD STREET': 'P.O. OXFORD STREET',
                         'ORIGINAL FACTORY S': 'Original Factory Shop',
-
                     }
                 }
             }
@@ -148,77 +151,97 @@ def main():
                 return dataframe
 
             df = map_description(df, mapping)
-
+            df = df[(df['Transaction Date'] >= str(selected_date[0])) & (df['Transaction Date'] <= str(selected_date[1]))]
             def create_json_data(dataframe, date_column, value_column, key_column):
                 df = dataframe[[date_column, value_column, key_column]]
                 df = df.groupby([date_column, key_column]).sum().reset_index()
                 df = df.pivot(index=date_column, columns=key_column, values=value_column).reset_index()
                 df = df.fillna(0)
-                df_json = df.to_json(orient='records')
+                df_json = df.to_json(orient='records', default_handler=str)
+                return df_json
+
+            # create data for nivo pie chart
+            def create_json_data_pie(dataframe, value_column, key_column):
+                df = dataframe[[value_column, key_column]]
+                df = df.groupby([key_column]).sum().reset_index()
+                df = df.fillna(0)
+                df_json = df.to_json(orient='records', default_handler=str)
                 return df_json
 
             dj = create_json_data(df, 'Transaction Date', 'Debit Amount', 'Spending Type')
-            # st.write(json.loads(dj))
+            dp = create_json_data_pie(df, 'Debit Amount', 'Spending Type')
+            st.write(json.loads(dp))
 
             df_keys= df['Spending Type'].dropna().unique().tolist()
             # st.write(df_keys)
             with elements("spending_bar"):
-                with mui.Paper(sx={"minHeight": 400}):
-                    with mui.Box(sx={"flex": 1, "height": 600, "width": 1900}):
-                        nivo.Bar(
-                            data=json.loads(dj),
-                            keys=df_keys,
-                            indexBy='Transaction Date',
-                            enableGridX=False,
-                            enableGridY=True,
-                            theme='dark',
-                            margin={"top": 50, "right": 150, "bottom": 100, "left": 70},
-                            padding=0.2,
-                            valueScale={'type': 'linear'},
-                            indexScale={'type': 'band', 'round': True},
-                            colors={"scheme": "category10"},
-                            enableLabel=False,
-                        axisBottom={
-                            'tickSize': 5,
-                            'tickPadding': 5,
-                            'tickRotation': 45,
-                            'legend': 'Date',
-                            'legendPosition': 'middle',
-                            'legendOffset': 80
-                        },
-                        axisLeft={
-                            'tickSize': 5,
-                            'tickPadding': 0,
-                            'tickRotation': 0,
-                            'legend': 'Value',
-                            'legendPosition': 'middle',
-                            'legendOffset': -50
-                        },
-                            legends=[
-                                {
-                                    'dataFrom': 'keys',
-                                    'anchor': 'bottom-right',
-                                    'direction': 'column',
-                                    'justify': False,
-                                    'translateX': 120,
-                                    'translateY': 0,
-                                    'itemsSpacing': 2,
-                                    'itemWidth': 100,
-                                    'itemHeight': 20,
-                                    'itemDirection': 'left-to-right',
-                                    'itemOpacity': 0.85,
-                                    'symbolSize': 20,
-                                    'effects': [
-                                        {
-                                            'on': 'hover',
-                                            'style': {
-                                                'itemOpacity': 1
-                                            }
+                with html.div(
+                        key='spending_bar',
+                        css=
+                        {
+                            "flex": 1,
+                            "background-color": "white",
+                            "display": "flex",
+                            "borderRadius": "10px",
+                            "flexDirection": "column",
+                            "border-radius": "10px",
+                            "height": "800px",
+                        }
+                ):
+                    nivo.Bar(
+                        data=json.loads(dj),
+                        keys=df_keys,
+                        indexBy='Transaction Date',
+                        enableGridX=False,
+                        enableGridY=True,
+                        theme='dark',
+                        margin={"top": 50, "right": 150, "bottom": 100, "left": 70},
+                        padding=0.2,
+                        valueScale={'type': 'linear'},
+                        indexScale={'type': 'band', 'round': True},
+                        colors={"scheme": "category10"},
+                        enableLabel=False,
+                    axisBottom={
+                        'tickSize': 5,
+                        'tickPadding': 5,
+                        'tickRotation': 45,
+                        'legend': 'Date',
+                        'legendPosition': 'middle',
+                        'legendOffset': 80
+                    },
+                    axisLeft={
+                        'tickSize': 5,
+                        'tickPadding': 0,
+                        'tickRotation': 0,
+                        'legend': 'Value',
+                        'legendPosition': 'middle',
+                        'legendOffset': -50
+                    },
+                        legends=[
+                            {
+                                'dataFrom': 'keys',
+                                'anchor': 'bottom-right',
+                                'direction': 'column',
+                                'justify': False,
+                                'translateX': 120,
+                                'translateY': 0,
+                                'itemsSpacing': 2,
+                                'itemWidth': 100,
+                                'itemHeight': 20,
+                                'itemDirection': 'left-to-right',
+                                'itemOpacity': 0.85,
+                                'symbolSize': 20,
+                                'effects': [
+                                    {
+                                        'on': 'hover',
+                                        'style': {
+                                            'itemOpacity': 1
                                         }
-                                    ]
-                                }]
+                                    }
+                                ]
+                            }]
 
-                        )
+                    )
 
 
 if __name__ == "__main__":
