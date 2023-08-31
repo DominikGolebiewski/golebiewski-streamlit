@@ -9,7 +9,9 @@ from cryptography.fernet import Fernet
 from datetime import datetime, timedelta
 from io import StringIO, BytesIO
 from streamlit_elements import elements, mui, html, nivo
+from pages.finances.div import ChartContainer
 import json
+from contextlib import contextmanager
 
 st.set_page_config(layout='wide')
 
@@ -47,6 +49,8 @@ class Authenticate:
 def csv_to_df(file):
     df = pd.read_csv(file)
     return df
+
+
 
 
 def main():
@@ -180,107 +184,111 @@ def main():
 
             dj = create_json_data(df, 'Transaction Date', 'Debit Amount', 'Spending Type')
             dp = create_json_data_pie(df, 'Debit Amount', 'Spending Type')
-            dl = create_json_data_line(df, 'Transaction Date', 'Balance')
-            st.write(json.loads(dl))
 
             df_keys= df['Spending Type'].dropna().unique().tolist()
             # st.write(df_keys)
-            with elements("spending_bar"):
+
+            @contextmanager
+            def div():
                 with html.div(
                         key='spending_bar',
                         css=
                         {
-                            "flex": 1,
-                            "background-color": "white",
                             "display": "flex",
-                            "borderRadius": "10px",
-                            "flexDirection": "column",
+                            "alignItems": "center",
+                            "justifyContent": "center",
+                            "background-color": "white",
+                            "border": "2px solid #d3d3d3",
                             "border-radius": "10px",
-                            "height": "300px",
+                            "box-shadow": "5px 5px 5px 0 rgba(0, 0, 0, 0.4)",
+                            "height": "50%",
+                            "width": "80%",
+                            "margin": "10px"
                         }
                 ):
-                    nivo.Pie(
-                        data=json.loads(dp),
-                        keys=['value'],
-                        indexBy='id',
-                        enableGridX=False,
-                        enableGridY=True,
-                        margin={"top": 50, "right": 150, "bottom": 100, "left": 70},
-                    )
+                    yield
+
+            with elements("spending_bar"):
                 with html.div(
-                            key='spending_bar',
-                            css=
-                            {
-                                "flex": 1,
-                                "background-color": "white",
-                                "display": "flex",
-                                "borderRadius": "10px",
-                                "flexDirection": "column",
-                                "border-radius": "10px",
-                                "height": "800px",
-                            }
-                    ):
-                    nivo.Line(
-                        data=json.loads(dl),
-                        enableGridX=False,
-                        enableGridY=True,
-
-                        margin={"top": 50, "right": 150, "bottom": 100, "left": 70},
-                    )
-                    nivo.Bar(
-                        data=json.loads(dj),
-                        keys=df_keys,
-                        indexBy='Transaction Date',
-                        enableGridX=False,
-                        enableGridY=True,
-                        theme='dark',
-                        margin={"top": 50, "right": 150, "bottom": 100, "left": 70},
-                        padding=0.2,
-                        valueScale={'type': 'linear'},
-                        indexScale={'type': 'band', 'round': True},
-                        colors={"scheme": "category10"},
-                        enableLabel=False,
-                    axisBottom={
-                        'tickSize': 5,
-                        'tickPadding': 5,
-                        'tickRotation': 45,
-                        'legend': 'Date',
-                        'legendPosition': 'middle',
-                        'legendOffset': 80
-                    },
-                    axisLeft={
-                        'tickSize': 5,
-                        'tickPadding': 0,
-                        'tickRotation': 0,
-                        'legend': 'Value',
-                        'legendPosition': 'middle',
-                        'legendOffset': -50
-                    },
-                        legends=[
-                            {
-                                'dataFrom': 'keys',
-                                'anchor': 'bottom-right',
-                                'direction': 'column',
-                                'justify': False,
-                                'translateX': 120,
-                                'translateY': 0,
-                                'itemsSpacing': 2,
-                                'itemWidth': 100,
-                                'itemHeight': 20,
-                                'itemDirection': 'left-to-right',
-                                'itemOpacity': 0.85,
-                                'symbolSize': 20,
-                                'effects': [
-                                    {
-                                        'on': 'hover',
-                                        'style': {
-                                            'itemOpacity': 1
+                        key='spending_charts',
+                        css= {
+                    "height": "1024px",
+                    "width": "100%",
+                    "display": "flex",
+                    "flexDirection": "row",
+                    "border-radius": "10px",
+                    "overflow": "hidden",
+                        }
+                ):
+                    with ChartContainer("50%", "20%").div():
+                        nivo.Pie(
+                            data=json.loads(dp),
+                            keys=['value'],
+                            indexBy='id',
+                            enableGridX=False,
+                            enableGridY=True,
+                            enableArcLinkLabels=False,
+                            enableArcLabels=False,
+                            innerRadius=0.5,
+                            enableLabels=False,
+                            margin={"top": 50, "right": 50, "bottom": 50, "left": 50},
+                            colors={"scheme": "category10"},
+                        )
+                    with ChartContainer("50%", "80%").div():
+                        nivo.Bar(
+                            data=json.loads(dj),
+                            keys=df_keys,
+                            indexBy='Transaction Date',
+                            enableGridX=False,
+                            enableGridY=True,
+                            theme='dark',
+                            margin={"top": 50, "right": 150, "bottom": 100, "left": 70},
+                            padding=0.2,
+                            valueScale={'type': 'linear'},
+                            indexScale={'type': 'band', 'round': True},
+                            colors={"scheme": "category10"},
+                            enableLabel=False,
+                        axisBottom={
+                            'tickSize': 5,
+                            'tickPadding': 5,
+                            'tickRotation': 45,
+                            'legend': 'Date',
+                            'legendPosition': 'middle',
+                            'legendOffset': 80
+                        },
+                        axisLeft={
+                            'tickSize': 5,
+                            'tickPadding': 0,
+                            'tickRotation': 0,
+                            'legend': 'Value',
+                            'legendPosition': 'middle',
+                            'legendOffset': -50
+                        },
+                            legends=[
+                                {
+                                    'dataFrom': 'keys',
+                                    'anchor': 'bottom-right',
+                                    'direction': 'column',
+                                    'justify': False,
+                                    'translateX': 120,
+                                    'translateY': 0,
+                                    'itemsSpacing': 2,
+                                    'itemWidth': 100,
+                                    'itemHeight': 20,
+                                    'itemDirection': 'left-to-right',
+                                    'itemOpacity': 0.85,
+                                    'symbolSize': 20,
+                                    'effects': [
+                                        {
+                                            'on': 'hover',
+                                            'style': {
+                                                'itemOpacity': 1
+                                            }
                                         }
-                                    }
-                                ]
-                            }]
+                                    ]
+                                }]
 
-                    )
+                        )
 
 
 if __name__ == "__main__":
