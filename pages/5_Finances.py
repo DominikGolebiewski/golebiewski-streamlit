@@ -63,7 +63,7 @@ def main():
                 df = csv_to_df(uploaded_file)
                 df = df[df['Debit Amount'].notnull()]
 
-            df['Transaction Date'] = pd.to_datetime(df['Transaction Date']).dt.strftime('%Y-%m-%d')
+            df['Transaction Date'] = pd.to_datetime(df['Transaction Date'], format='%d/%m/%Y').dt.strftime('%Y-%m-%d')
             max_date = datetime.strptime(df['Transaction Date'].max(), '%Y-%m-%d')
             min_date = datetime.strptime(df['Transaction Date'].min(), '%Y-%m-%d')
             selected_date = st.date_input('Select a date range', [min_date, max_date])
